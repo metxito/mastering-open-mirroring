@@ -17,9 +17,18 @@
 
 
 ```mermaid
-  graph TD;
-      A-->B;
-      A-->C;
-      B-->D;
-      C-->D;
+---
+title: Transactional Data Base
+---
+erDiagram
+    Customer ||--o{ CardAccount : owns
+    CardAccount ||--o{ Card : has
+    CardAccount ||--o{ Payments : receives
+    Card ||--o{ Transaction : makes
+    CardType ||--o{ Card : defines
+    Transaction ||--|| TransactionStatus : has
+    Transaction ||--|| TransactionType : is
+    Transaction }o--|| Merchant : occurs_at
+    Merchant ||--o{ MerchantCategory : belongs_to
+    Transaction }o--|| Currency : in
 ```
