@@ -1,0 +1,26 @@
+version: '3.8'
+services:
+  fabcon-python:
+    image: mcr.microsoft.com/devcontainers/python:3.13
+    container_name: fabcon-python
+    volumes:
+      - ..:/workspaces/mastering-open-mirroring:cached
+    command: sleep infinity
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - openmirroring
+  fabcon-sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: fabcon-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=FABcon2025!
+    ports:
+      - 1433:1433
+    networks:
+      - openmirroring
+    restart: unless-stopped
+networks:
+  openmirroring:
+    driver: bridge

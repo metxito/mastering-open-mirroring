@@ -16,3 +16,10 @@
 |Payments	        |Records payments made by customers to settle CardAccount balances.|
 
 
+```mermaid
+  graph TD;
+      A-->B;
+      A-->C;
+      B-->D;
+      C-->D;
+```

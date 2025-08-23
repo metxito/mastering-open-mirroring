@@ -1,0 +1,18 @@
+{
+    "name": "Mastering Open Mirroring",
+    "service": "devcontainer",
+    "workspaceFolder": "/workspaces/mastering-open-mirroring",
+    "dockerComposeFile": [
+        "docker-compose.yml"
+    ],
+    "settings": {
+        "python.pythonPath": "/usr/local/bin/python",
+        "python.defaultInterpreterPath": "/usr/local/bin/python"
+    },
+    "extensions": [
+        "ms-python.python",
+        "ms-azuretools.vscode-docker",
+        "ms-mssql.mssql"
+    ],
+    "postCreateCommand": "pip install -r code/requirements.txt || true"
+}

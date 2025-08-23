@@ -1,0 +1,4 @@
+# Python requirements for Open Mirroring PoC
+pandas
+pyodbc
+sqlalchemy
