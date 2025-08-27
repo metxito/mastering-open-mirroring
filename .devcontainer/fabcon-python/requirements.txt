@@ -1,8 +1,10 @@
 # Python requirements for Open Mirroring PoC
 fastapi
 uvicorn
+jinja2
 pyodbc
 pandas
+python-multipart
 pyarrow
 sqlalchemy
 azure-identity

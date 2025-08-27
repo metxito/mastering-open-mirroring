@@ -1,0 +1,26 @@
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Connection Name</th>
+            <th>Source Name</th>
+            <th>Other Columns</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in sources %}
+        <tr>
+            <td>{{ row.id }}</td>
+            <td>{{ row.connection_name }}</td>
+            <td>{{ row.source_name }}</td>
+            <td><!-- Add other columns as needed --></td>
+            <td>
+                <form method="post" action="/include_source/{{ row.id }}" style="display:inline;">
+                    <button type="submit" class="btn btn-success btn-sm">Include</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

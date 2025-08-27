@@ -1,0 +1,45 @@
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Proyect Name</th>
+            <th>Connection Name</th>
+            <th>Query Name</th>
+            <th>Base Query</th>
+            <th>Unique Keys</th>
+            <th>Timestamp Keys</th>
+            <th>Change Detection Mode</th>
+            <th>Change Detection Code</th>
+            <th>Active</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in queries %}
+        <tr>
+            <td>{{ row.id }}</td>
+            <td>{{ row.proyect_name }}</td>
+            <td>{{ row.connection_name }}</td>
+            <td>{{ row.query_name }}</td>
+            <td>{{ row.base_query }}</td>
+            <td>{{ row.unique_keys }}</td>
+            <td>{{ row.timestamp_keys }}</td>
+            <td>{{ row.change_detection_mode }}</td>
+            <td>{{ row.change_detection_code }}</td>
+            <td>
+                <form method="post" action="/toggle_active/{{ row.id }}" style="display:inline;">
+                    <input type="hidden" name="active" value="{{ 1 if not row.active else 0 }}">
+                    <button type="submit" class="btn btn-sm {{ 'btn-success' if row.active else 'btn-secondary' }}">
+                        {{ 'Active' if row.active else 'Inactive' }}
+                    </button>
+                </form>
+            </td>
+            <td>
+                <form method="post" action="/restart/{{ row.id }}" style="display:inline;">
+                    <button type="submit" class="btn btn-warning btn-sm">Restart</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
