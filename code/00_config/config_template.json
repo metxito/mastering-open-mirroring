@@ -7,11 +7,8 @@
     "sql_port": "1433",
     "sql_user": "sa",
     "sql_password": "FABcon2025!",
-    "sql_catalog": "fabcon_source"
+    "sql_catalog_source": "fabcon_source",
+    "sql_catalog_control": "fabcon_control",
+
+    "onelake_landing_zone": "https://onelake.dfs.fabric.microsoft.com/xxxx/xxx/Files/LandingZone"
 }
-
-
-
-create_engine("mssql+pyodbc://sa:FABcon2025!@fabcon-sqlserver,1433/fabcon_source?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes")
-
-f"mssql+pyodbc://{sql_user}:{sql_password}@{sql_server},{sql_port}/{sql_catalog}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"

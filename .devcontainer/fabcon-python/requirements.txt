@@ -1,4 +1,6 @@
 # Python requirements for Open Mirroring PoC
+fastapi
+uvicorn
 pyodbc
 pandas
 pyarrow

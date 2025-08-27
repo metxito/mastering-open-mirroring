@@ -17,5 +17,8 @@
         "GitHub.copilot",
         "GitHub.copilot-chat"
     ],
-    "postCreateCommand": "/bin/bash /docker_init/init.sh"
+    "postCreateCommand": "/bin/bash /docker_init/init.sh",
+    "features": {
+        "ghcr.io/devcontainers/features/git:1": {}
+    }
 }

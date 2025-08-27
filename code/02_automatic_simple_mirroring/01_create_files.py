@@ -10,8 +10,8 @@ from azure.storage.filedatalake import DataLakeServiceClient
 tables = ["CardType"]
 config = json.load(open("../00_config/config.json"))
 
-sql_engine = create_engine(f"mssql+pyodbc://{config["sql_user"]}:{config["sql_password"]}@{config["sql_server"]},{config["sql_port"]}/{config["sql_catalog"]}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes")
-with sql_engine.connect() as conn:
+sql_source_engine = create_engine(f"mssql+pyodbc://{config["sql_user"]}:{config["sql_password"]}@{config["sql_server"]},{config["sql_port"]}/{config["sql_catalog_source"]}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes")
+with sql_source_engine.connect() as conn:
     for t in tables:
         
         # PREPARE folder

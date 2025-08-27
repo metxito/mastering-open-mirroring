@@ -2,7 +2,7 @@ import os
 import json
 import pandas as pd
 from urllib.parse import urlparse
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from azure.identity import ClientSecretCredential
 from azure.storage.filedatalake import DataLakeServiceClient
 
@@ -10,6 +10,7 @@ from azure.storage.filedatalake import DataLakeServiceClient
 tables = [
     "Card",
     "CardAccount",
+    "CardType",
     "Currency",
     "Customer",
     "Merchant",
@@ -37,16 +38,9 @@ onelake_service_client = DataLakeServiceClient(account_url=onelake_account_url, 
 onelake_filesystem = onelake_service_client.get_file_system_client(file_system=onelake_filesystem)
 
 
-sql_source_engine = create_engine(f"mssql+pyodbc://{config["sql_user"]}:{config["sql_password"]}@{config["sql_server"]},{config["sql_port"]}/{config["sql_catalog_source"]}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes")
-sql_control_engine = create_engine(f"mssql+pyodbc://{config["sql_user"]}:{config["sql_password"]}@{config["sql_server"]},{config["sql_port"]}/{config["sql_catalog_control"]}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes")
-query_control_insert = (
-        "INSERT INTO [control].[queries_control] ",
-        "([proyect_name], [connection_name], [query_name], [base_query], [unique_keys], [timestamp_keys]) "
-        "VALUES ",
-        "(':proy_name', ':conn_name', ':query_name', ':query', ':uniquekeys', ':timestamp_keys')"
-    )
+sql_engine = create_engine(f"mssql+pyodbc://{config["sql_user"]}:{config["sql_password"]}@{config["sql_server"]},{config["sql_port"]}/{config["sql_catalog"]}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes")
 
-with sql_source_engine.connect() as source_conn, sql_control_engine.connect() as control_conn:
+with sql_engine.connect() as conn:
     for t in tables:
         
         # PREPARE folder
@@ -56,7 +50,7 @@ with sql_source_engine.connect() as source_conn, sql_control_engine.connect() as
 
         # QUERY Unique keys
         keycolumns_query = f"SELECT [keyColumns] = c.[name] FROM [sys].[tables] AS t JOIN [sys].[indexes] AS i ON [t].[object_id] = [i].[object_id] JOIN [sys].[index_columns] AS ic ON [i].[object_id] = [ic].[object_id] AND [i].[index_id] = [ic].[index_id] JOIN [sys].[columns] AS c ON [ic].[object_id] = [c].[object_id] AND [ic].[column_id] = [c].[column_id] WHERE [t].[name] = '{t}' AND [i].[is_primary_key] = 1"
-        keycolumns_df = pd.read_sql(keycolumns_query, source_conn)
+        keycolumns_df = pd.read_sql(keycolumns_query, conn)
         json_data = {"keyColumns": keycolumns_df["keyColumns"].tolist()}
         
 
@@ -70,7 +64,7 @@ with sql_source_engine.connect() as source_conn, sql_control_engine.connect() as
         # QUERY data
         #,[__rowMarker__]=0  is not mandatory in the first insert. Actually is not recommended
         data_query = f"SELECT * FROM [dbo].[{t}]"
-        data_df = pd.read_sql(data_query, source_conn)
+        data_df = pd.read_sql(data_query, conn)
 
 
         # SAVE parquet file to local
@@ -97,19 +91,5 @@ with sql_source_engine.connect() as source_conn, sql_control_engine.connect() as
             file_client = onelake_table_directory.get_file_client(parquet_file)
             file_client.upload_data(data, overwrite=True)
 
-        #(':proy_name', ':conn_name', ':query_name', ':query', ':uniquekeys', ':timestamp_keys')
-        parameters = {
-            "proy_name": "simple_mirroring",
-            "conn_name": "simple_mirroring",
-            "query_name": f"{t}",
-            "query": data_query,
-            "uniquekeys"
-        }
-        control_conn.execute(
-            
-            
-            text(query_control_insert),
-            #{"v1": "hello", "v2": 123}
-        )
 
         print (f"{t} done")

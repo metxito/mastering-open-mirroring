@@ -10,6 +10,9 @@ services:
       - PYTHONUNBUFFERED=1
     networks:
       - openmirroring
+    ports:
+      - 9080:8000
+      - 9443:8443
   fabcon-sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: fabcon-sqlserver
