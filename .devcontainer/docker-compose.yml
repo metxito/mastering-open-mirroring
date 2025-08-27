@@ -1,10 +1,10 @@
-version: '3.8'
 services:
   fabcon-python:
     image: mcr.microsoft.com/devcontainers/python:3.13
     container_name: fabcon-python
     volumes:
       - ..:/workspaces/mastering-open-mirroring:cached
+      - ./fabcon-python:/docker_init
     command: sleep infinity
     environment:
       - PYTHONUNBUFFERED=1
@@ -20,18 +20,6 @@ services:
       - 1433:1433
     networks:
       - openmirroring
-    volumes:
-      - ./../fabcon_source_example:/docker_init
-    command: >
-      /bin/bash -c "
-        /opt/mssql/bin/sqlservr &
-        pid=$!
-        echo 'Waiting for SQL Server to start...' &&
-        sleep 30 &&
-        /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'FABcon2025!' -i /docker_init/1000_init_database.sql -C ||
-        echo 'Init script failed'
-        wait $pid
-      "
     restart: unless-stopped
 networks:
   openmirroring:

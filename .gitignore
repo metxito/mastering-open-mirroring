@@ -195,5 +195,10 @@ cython_debug/
 
 
 
-data/
-documents/underedition
+documents/under_edition
+code/00_config/config.json
+
+myinfo.md
+
+results/**/*.parquet
+results/**/*.json

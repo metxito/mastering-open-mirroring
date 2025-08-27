@@ -1,7 +1,12 @@
 IF NOT EXISTS (SELECT TOP 1 1 FROM [sys].[databases] WHERE [name]='fabcon_source')
-EXEC('CREATE DATABASE [fabcon_source]')
+BEGIN
+    EXEC('CREATE DATABASE [fabcon_source]')
+    PRINT '[fabcon_source] database created'
+END
 GO
 USE [fabcon_source]
+GO
+SET NOCOUNT ON
 GO
 
 
@@ -24,8 +29,11 @@ VALUES
     (2, 'MasterCard', 'MasterCard Credit or Debit Card'),
     (3, 'American Express', 'American Express Credit Card'),
     (4, 'Discover', 'Discover Credit Card'),
-    (5, 'Debit', 'Generic Debit Card');
+    (5, 'Debit', 'Generic Debit Card')
 GO
+PRINT '[dbo].[CardType] done'
+GO
+
 
 
 
@@ -51,6 +59,10 @@ VALUES
     (4, 'Settled',  'Transaction has been cleared and funds settled'),
     (5, 'Reversed', 'Transaction was reversed or refunded');
 GO
+PRINT '[dbo].[TransactionStatus] done'
+GO
+
+
 
 
 
@@ -77,6 +89,9 @@ VALUES
     (4, 'Fee', 'Bank or service fee applied'),
     (5, 'Interest', 'Interest charges on balance');
 GO
+PRINT '[dbo].[TransactionType] done'
+GO
+
 
 
 
@@ -101,6 +116,9 @@ VALUES
     (1, 'EUR', 'Euro', '€'),
     (2, 'USD', 'US Dollar', '$');
 GO
+PRINT '[dbo].[Currency] done'
+GO
+
 
 
 
@@ -131,6 +149,9 @@ VALUES
     (5, 'Utilities', 'Electricity, water, internet services'),
     (6, 'Health & Wellness', 'Pharmacies, gyms, clinics');
 GO
+PRINT '[dbo].[MerchantCategory] done'
+GO
+
 
 
 
@@ -189,6 +210,10 @@ VALUES
 (29, 'LA Fitness', 6, '2600 Michelson Dr', 'Irvine', 'USA'),
 (30, 'Rite Aid', 6, '30 Hunter Ln', 'Camp Hill', 'USA')
 GO
+PRINT '[dbo].[Merchant] done'
+GO
+
+
 
 
 
@@ -219,6 +244,9 @@ VALUES
 (4, 'Emily', 'Brown', 'emily.brown@example.com', '+1-555-4040', '1995-09-10'),
 (5, 'David', 'Wilson', 'david.wilson@example.com', '+1-555-5050', '1982-05-30')
 GO
+PRINT '[dbo].[Customer] done'
+GO
+
 
 
 
@@ -252,6 +280,8 @@ VALUES
 (130, 3, 'ACU10130', 0.00, 10000.00, 2), -- Michael Johnson, USD
 (140, 4, 'ACE10140', 0.00,  3000.00, 1), -- Emily Brown, EUR
 (150, 5, 'ACU10150', 0.00,  6000.00, 2); -- David Wilson, USD
+GO
+PRINT '[dbo].[CardAccount] done'
 GO
 
 
@@ -291,43 +321,14 @@ VALUES
 (4, 140, 3, '3782822463100305', '2024-02-03T16:00:00', '20250930', '012'), -- Emily Brown, American Express
 (5, 150, 2, '5105105105105100', '2024-12-11T20:00:00', '20270831', '345') -- David Wilson, MasterCard
 GO
-
-
-
-
-
-
-
-
-
-
--- ==============================================================================
--- Create Transaction table
--- ==============================================================================
-IF NOT EXISTS (SELECT TOP 1 1 FROM [INFORMATION_SCHEMA].[TABLES] WHERE [TABLE_SCHEMA]='dbo' AND [TABLE_NAME]='Transaction')
-EXEC ('CREATE TABLE [dbo].[Transaction]
-(
-    [TransactionID]             UNIQUEIDENTIFIER     NOT NULL   PRIMARY KEY DEFAULT NEWID(),
-    [CardID]                    INT                  NOT NULL,
-    [TransactionTypeID]         INT                  NOT NULL,
-    [TransactionStatusID]       INT                  NOT NULL,
-    [MerchantID]                INT                  NOT NULL,
-    [CurrencyID]                INT                  NOT NULL,
-    [Amount]                    DECIMAL(18,2)        NOT NULL,
-    [TransactionDate]           DATETIME2            NOT NULL,
-
-    CONSTRAINT [FK_Transaction_Card] FOREIGN KEY ([CardID]) REFERENCES [dbo].[Card]([CardID]),
-    CONSTRAINT [FK_Transaction_TransactionType] FOREIGN KEY ([TransactionTypeID]) REFERENCES [dbo].[TransactionType]([TransactionTypeID]),
-    CONSTRAINT [FK_Transaction_TransactionStatus] FOREIGN KEY ([TransactionStatusID]) REFERENCES [dbo].[TransactionStatus]([TransactionStatusID]),
-    CONSTRAINT [FK_Transaction_Merchant] FOREIGN KEY ([MerchantID]) REFERENCES [dbo].[Merchant]([MerchantID]),
-    CONSTRAINT [FK_Transaction_Currency] FOREIGN KEY ([CurrencyID]) REFERENCES [dbo].[Currency]([CurrencyID])
-)')
+PRINT '[dbo].[Card] done'
 GO
-IF (SELECT COUNT(1) FROM [dbo].[Transaction]) = 0
-INSERT INTO [dbo].[Transaction] ([CardID], [TransactionTypeID], [TransactionStatusID], [MerchantID], [CurrencyID], [Amount], [TransactionDate])
-VALUES
-(1, 1, 2,  1, 1, 120.50, '2025-01-01T08:00:00')
-GO
+
+
+
+
+
+
 
 
 
@@ -348,10 +349,47 @@ EXEC ('CREATE TABLE [dbo].[Payments]
     CONSTRAINT [FK_Payments_Currency]    FOREIGN KEY ([CurrencyID])    REFERENCES [dbo].[Currency]([CurrencyID])
 )')
 GO
+PRINT '[dbo].[Payments] done'
+GO
 
 
 
 
+
+
+
+
+
+GO
+-- ==============================================================================
+-- Create Transaction table
+-- ==============================================================================
+IF NOT EXISTS (SELECT TOP 1 1 FROM [INFORMATION_SCHEMA].[TABLES] WHERE [TABLE_SCHEMA]='dbo' AND [TABLE_NAME]='Transactions')
+EXEC ('CREATE TABLE [dbo].[Transactions]
+(
+    [TransactionID]             UNIQUEIDENTIFIER     NOT NULL   PRIMARY KEY DEFAULT NEWID(),
+    [CardID]                    INT                  NOT NULL,
+    [TransactionTypeID]         INT                  NOT NULL,
+    [TransactionStatusID]       INT                  NOT NULL,
+    [MerchantID]                INT                  NOT NULL,
+    [CurrencyID]                INT                  NOT NULL,
+    [Amount]                    DECIMAL(18,2)        NOT NULL,
+    [TransactionDate]           DATETIME2            NOT NULL,
+
+    CONSTRAINT [FK_Transaction_Card] FOREIGN KEY ([CardID]) REFERENCES [dbo].[Card]([CardID]),
+    CONSTRAINT [FK_Transaction_TransactionType] FOREIGN KEY ([TransactionTypeID]) REFERENCES [dbo].[TransactionType]([TransactionTypeID]),
+    CONSTRAINT [FK_Transaction_TransactionStatus] FOREIGN KEY ([TransactionStatusID]) REFERENCES [dbo].[TransactionStatus]([TransactionStatusID]),
+    CONSTRAINT [FK_Transaction_Merchant] FOREIGN KEY ([MerchantID]) REFERENCES [dbo].[Merchant]([MerchantID]),
+    CONSTRAINT [FK_Transaction_Currency] FOREIGN KEY ([CurrencyID]) REFERENCES [dbo].[Currency]([CurrencyID])
+)')
+GO
+IF (SELECT COUNT(1) FROM [dbo].[Transactions]) = 0
+INSERT INTO [dbo].[Transactions] ([CardID], [TransactionTypeID], [TransactionStatusID], [MerchantID], [CurrencyID], [Amount], [TransactionDate])
+VALUES
+(1, 1, 2,  1, 1, 120.50, '2025-06-01T08:00:00')
+GO
+PRINT '[dbo].[Transactions] done'
+GO
 
 
 
@@ -364,8 +402,7 @@ GO
 -- =======================================
 -- Create Stored Procedure: Insert New Transaction
 -- =======================================
-CREATE OR ALTER PROCEDURE [dbo].[usp_insert_random_transaction]
-    @days int = 0
+CREATE OR ALTER PROCEDURE [dbo].[usp_insert_new_transaction]
 AS
 BEGIN
 
@@ -382,106 +419,133 @@ BEGIN
     DECLARE @merchant INT;
     DECLARE @currency INT;
     DECLARE @amount DECIMAL(18,2);
-    DECLARE @initaltime DATETIME2
+
+
+
+    -- 1. Get the maximum [TransactionDate]
+    SELECT @lasttransaction = MAX([TransactionDate]) FROM [dbo].[Transactions];
+
+
+    -- 2. Add random minutes (5–20)
+    IF DAY(@lasttransaction) BETWEEN 5 AND 25
+        SET @minutesToAdd = 5 + ABS(CHECKSUM(NEWID())) % 16;
+    ELSE
+        SET @minutesToAdd = 2 + ABS(CHECKSUM(NEWID())) % 9;
+    SET @newtransaction = DATEADD(MINUTE, @minutesToAdd, @lasttransaction);
+    SET @newtransaction = DATEADD(SECOND, ABS(CHECKSUM(NEWID())) % 50, @newtransaction);
+
+    -- 3. If the hour > 23, roll to next day +9h
+    SET @hour = DATEPART(HOUR, @newtransaction);
+    IF @hour >= 23
+        SET @newtransaction = DATEADD(HOUR, 9, @newtransaction);
+
+    -- 4. Random card between 1 and 5
+    SET @card = 1 + ABS(CHECKSUM(NEWID())) % 5;
+
+    -- 5. Random TransactionStatus between 2 and 3
+    SET @transactionStatus = IIF (ABS(CHECKSUM(NEWID())) % 100 < 5, 3, 4)
+
+    -- 6. Random Merchant between 1 and 30
+    SET @merchant = 1 + ABS(CHECKSUM(NEWID())) % 30;
+
+    -- 7. Random Currency between 1 and 2
+    SELECT @currency = ca.[CurrencyID]
+    FROM
+        [dbo].[Card] AS c
+        JOIN [dbo].[CardAccount] AS ca ON c.[CardAccountID] = ca.[CardAccountID]
+    WHERE
+        c.[CardID] = @card
+    IF ABS(CHECKSUM(NEWID())) % 100 < 10
+        SET @currency = 1 + ABS(CHECKSUM(NEWID())) % 2;
+
+    -- 8. Random TransactionType (1 = 95%, others share 5%)
+    SET @transactionType = 1
+
+    -- 9. Random Amount between 10.00 and 1000.00
+    SET @amount = CAST(10 + (ABS(CHECKSUM(NEWID())) % 991) + (ABS(CHECKSUM(NEWID())) % 100) * 0.01 AS DECIMAL(18,2));
+
+
+
+
+    -- 10. Insert into Transaction table
+    INSERT INTO [dbo].[Transactions]
+        ([CardID], [TransactionTypeID], [TransactionStatusID], [MerchantID], [CurrencyID], [Amount], [TransactionDate])
+    VALUES
+        (@card, @transactionType, @transactionStatus, @merchant, @currency, @amount, @newtransaction);
+
+
+    IF ABS(CHECKSUM(NEWID())) % 100 <= 2 AND @transactionStatus = 4
+    BEGIN
+        SET @amount = @amount * 0.2
+        SET @newtransaction = DATEADD(SECOND, 1, @newtransaction)
+        INSERT INTO [dbo].[Transactions]
+            ([CardID], [TransactionTypeID], [TransactionStatusID], [MerchantID], [CurrencyID], [Amount], [TransactionDate])
+        VALUES
+            (@card, @transactionType, @transactionStatus, @merchant, @currency, @amount, @newtransaction);
+    END
+
+
+    IF MONTH(@lasttransaction) <> MONTH(@newtransaction)
+    BEGIN
+        INSERT INTO [dbo].[Payments] (
+            [CardAccountID],
+            [CurrencyID],
+            [PaymentDate],
+            [Amount]
+        )
+        SELECT
+            ca.[CardAccountID],
+            ca.[CurrencyID],
+            [PaymentDate] = DATEADD(MONTH, DATEDIFF(MONTH, 0, @newtransaction), 0),
+            SUM(t.[Amount]) AS [Amount]
+        FROM
+            [dbo].[Transactions] AS t
+            JOIN [dbo].[Card] AS c ON t.[CardID] = c.[CardID]
+            JOIN [dbo].[CardAccount] AS ca ON c.[CardAccountID] = ca.[CardAccountID]
+        WHERE
+            t.[TransactionStatusID] IN (2,4) -- Approved or Settled
+            AND DATEADD(MONTH, DATEDIFF(MONTH, 0, @lasttransaction), 0) <= t.[TransactionDate] -- Start of last month
+            AND t.[TransactionDate] < DATEADD(MONTH, DATEDIFF(MONTH, 0, @newtransaction), 0) -- Start of current month
+        GROUP BY
+            ca.[CardAccountID],
+            ca.[CurrencyID]
+        HAVING
+            SUM(t.[Amount]) > 0
+    END
+
+END
+GO
+PRINT '[dbo].[usp_insert_new_transaction] done'
+GO
+
+
+
+
+
+
+
+-- =======================================
+-- Create Stored Procedure: Insert New Transaction
+-- =======================================
+GO
+CREATE OR ALTER PROCEDURE [dbo].[usp_insert_range_transaction]
+    @days int = 0
+AS
+BEGIN
+
+    SET NOCOUNT ON;
+
+    DECLARE @newtransaction DATETIME2
+    DECLARE @initaltime DATETIME2 = (SELECT MAX([TransactionDate]) FROM [dbo].[Transactions])
     DECLARE @continue BIT = 1
 
-    SELECT @initaltime= MAX([TransactionDate]) FROM [dbo].[Transaction]
 
     WHILE @continue = 1
     BEGIN
 
+        EXEC [dbo].[usp_insert_new_transaction]
 
-
-        -- 1. Get the maximum [TransactionDate]
-        SELECT @lasttransaction = MAX([TransactionDate]) FROM [dbo].[Transaction];
-
-
-        -- 2. Add random minutes (5–20)
-        IF DAY(@lasttransaction) BETWEEN 5 AND 25
-            SET @minutesToAdd = 5 + ABS(CHECKSUM(NEWID())) % 16;
-        ELSE
-            SET @minutesToAdd = 2 + ABS(CHECKSUM(NEWID())) % 9;
-        SET @newtransaction = DATEADD(MINUTE, @minutesToAdd, @lasttransaction);
-        SET @newtransaction = DATEADD(SECOND, ABS(CHECKSUM(NEWID())) % 50, @newtransaction);
-
-        -- 3. If the hour > 23, roll to next day +9h
-        SET @hour = DATEPART(HOUR, @newtransaction);
-        IF @hour >= 23
-            SET @newtransaction = DATEADD(HOUR, 9, @newtransaction);
-
-        -- 4. Random card between 1 and 5
-        SET @card = 1 + ABS(CHECKSUM(NEWID())) % 5;
-
-        -- 5. Random TransactionStatus between 2 and 3
-        SET @transactionStatus = IIF (ABS(CHECKSUM(NEWID())) % 100 < 5, 3, 4)
-
-        -- 6. Random Merchant between 1 and 30
-        SET @merchant = 1 + ABS(CHECKSUM(NEWID())) % 30;
-
-        -- 7. Random Currency between 1 and 2
-        SELECT @currency = ca.[CurrencyID]
-        FROM
-            [dbo].[Card] AS c
-            JOIN [dbo].[CardAccount] AS ca ON c.[CardAccountID] = ca.[CardAccountID]
-        WHERE
-            c.[CardID] = @card
-        IF ABS(CHECKSUM(NEWID())) % 100 < 10
-            SET @currency = 1 + ABS(CHECKSUM(NEWID())) % 2;
-
-        -- 8. Random TransactionType (1 = 95%, others share 5%)
-        SET @transactionType = 1
-
-        -- 9. Random Amount between 10.00 and 1000.00
-        SET @amount = CAST(10 + (ABS(CHECKSUM(NEWID())) % 991) + (ABS(CHECKSUM(NEWID())) % 100) * 0.01 AS DECIMAL(18,2));
-
-
-
-
-        -- 10. Insert into Transaction table
-        INSERT INTO [dbo].[Transaction]
-            ([CardID], [TransactionTypeID], [TransactionStatusID], [MerchantID], [CurrencyID], [Amount], [TransactionDate])
-        VALUES
-            (@card, @transactionType, @transactionStatus, @merchant, @currency, @amount, @newtransaction);
-
-
-        IF ABS(CHECKSUM(NEWID())) % 100 <= 2 AND @transactionStatus = 4
-        BEGIN
-            SET @amount = @amount * 0.2
-            SET @newtransaction = DATEADD(SECOND, 1, @newtransaction)
-            INSERT INTO [dbo].[Transaction]
-                ([CardID], [TransactionTypeID], [TransactionStatusID], [MerchantID], [CurrencyID], [Amount], [TransactionDate])
-            VALUES
-                (@card, @transactionType, @transactionStatus, @merchant, @currency, @amount, @newtransaction);
-        END
-
-
-        IF MONTH(@lasttransaction) <> MONTH(@newtransaction)
-        BEGIN
-            INSERT INTO [dbo].[Payments] (
-                [CardAccountID],
-                [CurrencyID],
-                [PaymentDate],
-                [Amount]
-            )
-            SELECT
-                ca.[CardAccountID],
-                ca.[CurrencyID],
-                [PaymentDate] = DATEADD(MONTH, DATEDIFF(MONTH, 0, @newtransaction), 0),
-                SUM(t.[Amount]) AS [Amount]
-            FROM
-                [dbo].[Transaction] AS t
-                JOIN [dbo].[Card] AS c ON t.[CardID] = c.[CardID]
-                JOIN [dbo].[CardAccount] AS ca ON c.[CardAccountID] = ca.[CardAccountID]
-            WHERE
-                t.[TransactionStatusID] IN (2,4) -- Approved or Settled
-                AND DATEADD(MONTH, DATEDIFF(MONTH, 0, @lasttransaction), 0) <= t.[TransactionDate] -- Start of last month
-                AND t.[TransactionDate] < DATEADD(MONTH, DATEDIFF(MONTH, 0, @newtransaction), 0) -- Start of current month
-            GROUP BY
-                ca.[CardAccountID],
-                ca.[CurrencyID]
-            HAVING
-                SUM(t.[Amount]) > 0
-        END
+        SET @newtransaction = (SELECT MAX([TransactionDate]) FROM [dbo].[Transactions])
 
         IF DATEDIFF(HOUR, @initaltime, @newtransaction) >= @days * 24
             SET @continue = 0
@@ -489,15 +553,50 @@ BEGIN
 
 END
 GO
+PRINT '[dbo].[usp_insert_range_transaction] done'
+GO
 
 
+
+
+
+
+GO
+CREATE OR ALTER PROCEDURE [dbo].[usp_insert_continuously_transactions]
+AS
+BEGIN
+
+    SET NOCOUNT ON;
+
+    WHILE 1=1
+    BEGIN
+
+        EXEC [dbo].[usp_insert_new_transaction]
+
+        WAITFOR DELAY '00:00:02'
+
+    END
+
+END
+GO
+PRINT '[dbo].[usp_insert_continuously_transactions] done'
+GO
+
+
+
+
+
+GO
+PRINT ''
+PRINT '[dbo].[usp_insert_range_transaction] started'
+GO
 DECLARE @currenttime DATETIME2, @daysdiff int
-SELECT @currenttime= MAX([TransactionDate]) FROM [dbo].[Transaction]
+SELECT @currenttime= MAX([TransactionDate]) FROM [dbo].[Transactions]
 SET @daysdiff = DATEDIFF(DAY, @currenttime, DATEADD(DAY, -5, GETDATE()))
-
 IF @daysdiff > 0
-    EXEC [dbo].[usp_insert_random_transaction] @days = @daysdiff
+    EXEC [dbo].[usp_insert_range_transaction] @days = @daysdiff
 ELSE
-    DELETE FROM [dbo].[Transaction] WHERE [TransactionDate] > DATEADD(DAY, -5, GETDATE())
-
+    DELETE FROM [dbo].[Transactions] WHERE [TransactionDate] > DATEADD(DAY, -5, GETDATE())
+GO
+PRINT '[dbo].[usp_insert_range_transaction] executed'
 GO

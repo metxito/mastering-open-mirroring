@@ -1,0 +1,17 @@
+{
+    "tenant_id": "",
+    "client_name": "",
+    "client_id": "",
+    "client_secret": "",
+    "sql_server": "fabcon-sqlserver",
+    "sql_port": "1433",
+    "sql_user": "sa",
+    "sql_password": "FABcon2025!",
+    "sql_catalog": "fabcon_source"
+}
+
+
+
+create_engine("mssql+pyodbc://sa:FABcon2025!@fabcon-sqlserver,1433/fabcon_source?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes")
+
+f"mssql+pyodbc://{sql_user}:{sql_password}@{sql_server},{sql_port}/{sql_catalog}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
