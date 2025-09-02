@@ -129,7 +129,7 @@ pip install -r /docker_init/requirements.txt
 
 
 
-## RUN SQL scripts 
+## RUN SQL scripts
 echo ""
 echo ""
 echo -e "\033[32mDatabase [fabcon_source] initializing\033[0m"
