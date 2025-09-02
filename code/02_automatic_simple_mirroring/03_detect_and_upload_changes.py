@@ -42,7 +42,7 @@ sql_engine = create_engine(f"mssql+pyodbc://{config["sql_user"]}:{config["sql_pa
 
 with sql_engine.connect() as conn:
     for t in tables:
-        
+
         # PREPARE folder
         folder = f"../../results/01_simple_mirroring/{t}"
         os.makedirs(folder, exist_ok=True)
@@ -52,14 +52,14 @@ with sql_engine.connect() as conn:
         keycolumns_query = f"SELECT [keyColumns] = c.[name] FROM [sys].[tables] AS t JOIN [sys].[indexes] AS i ON [t].[object_id] = [i].[object_id] JOIN [sys].[index_columns] AS ic ON [i].[object_id] = [ic].[object_id] AND [i].[index_id] = [ic].[index_id] JOIN [sys].[columns] AS c ON [ic].[object_id] = [c].[object_id] AND [ic].[column_id] = [c].[column_id] WHERE [t].[name] = '{t}' AND [i].[is_primary_key] = 1"
         keycolumns_df = pd.read_sql(keycolumns_query, conn)
         json_data = {"keyColumns": keycolumns_df["keyColumns"].tolist()}
-        
+
 
         # SAVE json file to local
         json_file = "_metadata.json"
         json_full_path = os.path.join(folder, json_file)
         with open(json_full_path, "w") as f:
             json.dump(json_data, f)
-        
+
 
         # QUERY data
         #,[__rowMarker__]=0  is not mandatory in the first insert. Actually is not recommended
@@ -71,9 +71,9 @@ with sql_engine.connect() as conn:
         parquet_file = f"00000000000000000001.parquet"
         parque_full_path = os.path.join(folder, parquet_file)
         data_df.to_parquet(parque_full_path, engine="pyarrow", index=False)
-        
 
-        
+
+
         table_path = f"{onelake_landingzone_path}/{t}"
         onelake_table_directory = onelake_filesystem.get_directory_client(table_path)
 

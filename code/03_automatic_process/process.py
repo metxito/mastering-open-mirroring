@@ -1,6 +1,7 @@
 import os
 import json
 import pandas as pd
+
 from urllib.parse import urlparse
 from sqlalchemy import create_engine, text
 from azure.identity import ClientSecretCredential
