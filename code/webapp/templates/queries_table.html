@@ -2,42 +2,75 @@
     <thead>
         <tr>
             <th>ID</th>
-            <th>Proyect Name</th>
-            <th>Connection Name</th>
-            <th>Query Name</th>
-            <th>Base Query</th>
+            <th>Proyect</th>
+            <th>Connection</th>
+            <th>Name</th>
+            <th>Query</th>
             <th>Unique Keys</th>
             <th>Timestamp Keys</th>
             <th>Change Detection Mode</th>
             <th>Change Detection Code</th>
-            <th>Active</th>
+                <th>Delete Detection</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody>
         {% for row in queries %}
-        <tr>
+        <tr class="{% if not row.active %}inactive{% endif %}">
             <td>{{ row.id }}</td>
             <td>{{ row.proyect_name }}</td>
             <td>{{ row.connection_name }}</td>
             <td>{{ row.query_name }}</td>
-            <td>{{ row.base_query }}</td>
-            <td>{{ row.unique_keys }}</td>
-            <td>{{ row.timestamp_keys }}</td>
+            <td style="white-space: pre-wrap; word-break: break-word; min-width: 450px;">{{ row.base_query }}</td>
+            <td style="min-width: 250px;">{{ row.unique_keys }}</td>
+            <td style="min-width: 250px;">{{ row.timestamp_keys }}</td>
             <td>{{ row.change_detection_mode }}</td>
             <td>{{ row.change_detection_code }}</td>
-            <td>
+                <td>{{ 'Yes' if row.delete_detection else 'No' }}</td>
+            <td style="width: 400px; text-decoration: none;">
+                <form method="post" action="/restart/{{ row.id }}" style="display:inline;">
+                    <button type="submit" class="btn btn-warning btn-sm" {% if not row.active %}disabled{% endif %}>Restart</button>
+                </form>
+                <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('edit-form-{{ row.id }}').style.display='block'" {% if not row.active %}disabled{% endif %}>Edit</button>
+                <form method="post" action="/delete_query/{{ row.id }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this record?');">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
                 <form method="post" action="/toggle_active/{{ row.id }}" style="display:inline;">
-                    <input type="hidden" name="active" value="{{ 1 if not row.active else 0 }}">
                     <button type="submit" class="btn btn-sm {{ 'btn-success' if row.active else 'btn-secondary' }}">
-                        {{ 'Active' if row.active else 'Inactive' }}
+                        {{ 'Deactivate' if row.active else 'Activate' }}
                     </button>
                 </form>
-            </td>
-            <td>
-                <form method="post" action="/restart/{{ row.id }}" style="display:inline;">
-                    <button type="submit" class="btn btn-warning btn-sm">Restart</button>
-                </form>
+                <form id="edit-form-{{ row.id }}" method="post" action="/edit_query/{{ row.id }}" style="display:none; margin-top:10px;">
+                    <div class="form-group">
+                        <label>Base Query</label>
+                        <input type="text" name="base_query" class="form-control" value="{{ row.base_query }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Unique Keys</label>
+                        <input type="text" name="unique_keys" class="form-control" value="{{ row.unique_keys }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Timestamp Keys</label>
+                        <input type="text" name="timestamp_keys" class="form-control" value="{{ row.timestamp_keys }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Change Detection Code</label>
+                        <input type="text" name="change_detection_code" class="form-control" value="{{ row.change_detection_code }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Change Detection Mode</label>
+                        <select name="change_detection_mode" class="form-control">
+                            <option value="condition" {% if row.change_detection_mode == 'condition' %}selected{% endif %}>condition</option>
+                            <option value="only_insert" {% if row.change_detection_mode == 'only_insert' %}selected{% endif %}>only_insert</option>
+                        </select>
+                    </div>
+                        <div class="form-group">
+                            <label>Delete Detection</label>
+                            <input type="checkbox" name="delete_detection" value="1" {% if row.delete_detection %}checked{% endif %}>
+                        </div>
+                    <button type="submit" class="btn btn-success btn-sm">Save</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('edit-form-{{ row.id }}').style.display='none'">Cancel</button>
+                </form>                
             </td>
         </tr>
         {% endfor %}

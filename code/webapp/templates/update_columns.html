@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Current Status</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+
+    <div class="mt-4 fs-6">
+    <h2>Update Columns</h2>
+    <form method="post">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Column Name</th>
+                    <th>Type</th>
+                    <th>Unique Key</th>
+                    <th>Timestamp Key</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for col in columns %}
+                <tr>
+                    <td>{{ col.id }}</td>
+                    <td>{{ col.column }}</td>
+                    <td>{{ col.data_type }}</td>
+                    <td>
+                        <input type="checkbox" name="unique_key" value="{{ col.id }}" {% if col.unique_key %}checked{% endif %}>
+                    </td>
+                    <td>
+                        <input type="checkbox" name="timestamp_key" value="{{ col.id }}" {% if col.timestamp_key %}checked{% endif %}>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="/integration" class="btn btn-secondary">Close</a>
+    </form>
+
+</body>
+</html>

@@ -2,9 +2,10 @@
     <thead>
         <tr>
             <th>ID</th>
-            <th>Connection Name</th>
-            <th>Source Name</th>
-            <th>Other Columns</th>
+            <th>Connection</th>
+            <th>Object</th>
+            <th>Unique Keys</th>
+            <th>Timestamp Keys</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -13,11 +14,15 @@
         <tr>
             <td>{{ row.id }}</td>
             <td>{{ row.connection_name }}</td>
-            <td>{{ row.source_name }}</td>
-            <td><!-- Add other columns as needed --></td>
+            <td>{{ row.object }}</td>
+            <td>{{ row.unique_keys }}</td>
+            <td>{{ row.timestamp_keys }}</td>
             <td>
                 <form method="post" action="/include_source/{{ row.id }}" style="display:inline;">
                     <button type="submit" class="btn btn-success btn-sm">Include</button>
+                </form>
+                <form method="get" action="/update_columns/{{ row.id }}" style="display:inline;">
+                    <button type="submit" class="btn btn-primary btn-sm">Update Columns</button>
                 </form>
             </td>
         </tr>

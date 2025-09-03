@@ -1,32 +1,57 @@
 from fastapi import FastAPI, Request, Form
-from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse
+
 import sqlalchemy as sa
 from sqlalchemy import text
 
+
+
 app = FastAPI()
+
+
+
 templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Database connection config
-DATABASE_URL = "mssql+pyodbc://sa:FABcon2025!@fabcon-sqlserver,1433/fabcon_control?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
-engine = sa.create_engine(DATABASE_URL)
+DATABASE_CONTROL_URL = "mssql+pyodbc://sa:FABcon2025!@fabcon-sqlserver,1433/fabcon_control?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
+engine_control = sa.create_engine(DATABASE_CONTROL_URL)
+DATABASE_SOURCE_URL = "mssql+pyodbc://sa:FABcon2025!@fabcon-sqlserver,1433/fabcon_source_rowversion?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
+engine_source = sa.create_engine(DATABASE_SOURCE_URL)
+
+
+
+
 
 def get_queries():
-    with engine.connect() as conn:
+    with engine_control.begin() as conn:
         result = conn.execute(text("SELECT * FROM [control].[queries_control]"))
         return [dict(row._mapping) for row in result]
 
 def get_proyect_names():
-    with engine.connect() as conn:
+    with engine_control.begin() as conn:
         result = conn.execute(text("SELECT DISTINCT proyect_name FROM [control].[queries_control]"))
         return [row[0] for row in result]
 
 def get_connection_names():
-    with engine.connect() as conn:
+    with engine_control.begin() as conn:
         result = conn.execute(text("SELECT DISTINCT connection_name FROM [source].[sources]"))
         return [row[0] for row in result]
+
+
+
+
+
+@app.get("/")
+def root():
+    return RedirectResponse(url="/current_status")
+
+
+
+
 
 @app.get("/current_status")
 def current_status(request: Request):
@@ -40,6 +65,9 @@ def current_status(request: Request):
         "connection_names": connection_names
     })
 
+
+
+
 @app.post("/create_query")
 def create_query(
     request: Request,
@@ -52,7 +80,7 @@ def create_query(
     change_detection_mode: str = Form(...),
     change_detection_code: str = Form(...)
 ):
-    with engine.connect() as conn:
+    with engine_control.connect() as conn:
         conn.execute(text("""
             INSERT INTO [control].[queries_control]
             (proyect_name, connection_name, query_name, base_query, unique_keys, timestamp_keys, change_detection_mode, change_detection_code, active)
@@ -69,23 +97,39 @@ def create_query(
         })
     return RedirectResponse(url="/current_status", status_code=303)
 
+
+
+
 @app.post("/toggle_active/{query_id}")
-def toggle_active(query_id: int, active: int = Form(...)):
-    with engine.connect() as conn:
-        conn.execute(text("UPDATE [control].[queries_control] SET active = :active WHERE id = :id"), {"active": active, "id": query_id})
+def toggle_active(query_id: int):
+    with engine_control.begin() as conn:
+        conn.execute(text("UPDATE [control].[queries_control] SET [active] = CASE WHEN [active] = 1 THEN 0 ELSE 1 END WHERE [id] = :id"), {"id": query_id})
+        
     return RedirectResponse(url="/current_status", status_code=303)
+
+
+
+
 
 @app.post("/restart/{query_id}")
 def restart(query_id: int):
-    with engine.connect() as conn:
-        conn.execute(text("UPDATE [control].[queries_control] SET next_file_sequence = NULL, current_timestamp = NULL WHERE id = :id"), {"id": query_id})
+    with engine_control.begin() as conn:
+        conn.execute(text("UPDATE [control].[queries_control] SET [next_file_sequence] = NULL, [current_timestamp] = NULL WHERE [id] = :id"), {"id": query_id})
     return RedirectResponse(url="/current_status", status_code=303)
+
+
+
+
 
 # Integration page
 def get_sources():
-    with engine.connect() as conn:
-        result = conn.execute(text("SELECT * FROM [source].[sources]"))
-        return [dict(row) for row in result]
+    with engine_control.begin() as conn:
+        result = conn.execute(text("SELECT * FROM [source].[v_sources]"))
+        return [dict(row._mapping) for row in result]
+
+
+
+
 
 @app.get("/integration")
 def integration(request: Request):
@@ -95,25 +139,128 @@ def integration(request: Request):
         "sources": sources
     })
 
+
+
+
+
 @app.post("/refresh_sources")
 def refresh_sources():
+    with engine_control.begin() as conn:
+        conn.execute(text("EXEC [control].[usp_refresh_metadata]"))
     return RedirectResponse(url="/integration", status_code=303)
+
+
+
+# Edit query fields
+@app.post("/delete_query/{query_id}")
+def edit_query(
+    query_id: int
+):
+    with engine_control.begin() as conn:
+        conn.execute(text(
+            "DELETE FROM [control].[queries_control] WHERE [id] = :id"), 
+            {
+                "id": query_id
+            }
+        )
+    return RedirectResponse(url="/current_status", status_code=303)
+
+
+# Edit query fields
+@app.post("/edit_query/{query_id}")
+def edit_query(
+    query_id: int,
+    base_query: str = Form(...),
+    unique_keys: str = Form(...),
+    timestamp_keys: str = Form(...),
+    change_detection_mode: str = Form(...),
+    change_detection_code: str = Form(...),
+    delete_detection: str = Form( None )
+):
+    delete_detection_value = 1 if delete_detection == '1' else 0    
+    with engine_control.begin() as conn:
+        conn.execute(text(
+            "UPDATE [control].[queries_control] SET [base_query] = :base_query, [unique_keys] = :unique_keys, [timestamp_keys] = :timestamp_keys, [change_detection_mode] = :change_detection_mode, [change_detection_code] = :change_detection_code, [delete_detection] = :delete_detection WHERE [id] = :id"), 
+            {
+                "base_query": base_query,
+                "unique_keys": unique_keys,
+                "timestamp_keys": timestamp_keys,
+                "change_detection_code": change_detection_code,
+                "change_detection_mode": change_detection_mode,
+                "delete_detection": delete_detection_value,
+                "id": query_id
+            }
+        )
+    return RedirectResponse(url="/current_status", status_code=303)
+
+
+
+
 
 @app.post("/include_source/{source_id}")
 def include_source(source_id: int):
-    with engine.connect() as conn:
-        conn.execute(text("EXEC [control].[usp_include_new_source] @source_id=:source_id"), {"source_id": source_id})
+    with engine_control.begin() as conn:
+        conn.execute(text("EXEC [control].[usp_add_source_object] @id=:source_id"), {"source_id": source_id})
+    return RedirectResponse(url="/current_status", status_code=303)
+
+
+
+
+
+
+
+
+
+def get_source_columns(id):
+    with engine_control.begin() as conn:
+        result = conn.execute(text("SELECT c.* FROM [source].[sources] AS src JOIN [source].[columns] AS c ON src.[connection_name]=c.[connection_name] AND src.[object]=c.[object] WHERE src.[id] = :id"), {"id": id})
+        return [dict(row._mapping) for row in result]
+
+@app.get("/update_columns/{id}", response_class=HTMLResponse)
+def update_columns_form(request: Request, id: int):
+    columns = get_source_columns(id)
+    return templates.TemplateResponse("update_columns.html", {
+        "request": request,
+        "source_id": id,
+        "columns": columns
+    })
+
+
+
+@app.post("/update_columns/{tableid}")
+def update_columns(request: Request, tableid: int, unique_key: list[int] = Form([]), timestamp_key: list[int] = Form([])):
+    print (tableid)
+    # unique_key and timestamp_key are lists of column ids to set as True
+    with engine_control.begin() as conn:
+        # First, set all to 0 for this source
+        conn.execute(text("UPDATE [source].[columns] SET [unique_key]=0, [timestamp_key]=0 WHERE [object] IN (SELECT [object] FROM [source].[sources] WHERE [id]=:tableid)"), {"tableid": tableid})
+        # Then, set selected unique_key columns to 1
+        if unique_key:
+            for i in unique_key:
+                conn.execute(text("UPDATE [source].[columns] SET [unique_key]=1 WHERE [id] = :i"), {"i": i})
+        # Set selected timestamp_key columns to 1
+        if timestamp_key:
+            for i in timestamp_key:
+                conn.execute(text("UPDATE [source].[columns] SET [timestamp_key]=1 WHERE [id] = :i"), {"i": i})
+    
     return RedirectResponse(url="/integration", status_code=303)
+
+
+
 
 # Check SQL Server connection status
 @app.get("/check_connection")
 def check_connection_form(request: Request):
     return templates.TemplateResponse("check_connection.html", {"request": request})
 
+
+
+
+
 @app.post("/check_connection")
 def check_connection(request: Request):
     try:
-        with engine.connect() as conn:
+        with engine_control.begin() as conn:
             conn.execute(text("SELECT 1"))
         return templates.TemplateResponse("check_connection.html", {"request": request, "status": "success"})
     except Exception as e:
