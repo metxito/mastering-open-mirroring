@@ -4,5 +4,16 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"liveSassCompile.settings.formats": [
+			{
+				"format": "expanded",
+				"extensionName": ".css",
+				"savePath": "/code/webapp/static/css"
+			}
+		],
+		"liveSassCompile.settings.includeItems": [
+			"/code/webapp/static/sass/**/*.scss"
+		]
+	}
 }

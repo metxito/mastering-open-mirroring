@@ -195,10 +195,10 @@ cython_debug/
 
 
 
-documents/under_edition
-code/00_config/config.json
+documentation/under_edition/EMFCC25_SpeakerPPT_TemplateA_Styled.pptx
+code/02_automatic_simple_mirroring/00_config.json
 
 myinfo.md
 
-results/**/*.parquet
-results/**/*.json
+results/
+
