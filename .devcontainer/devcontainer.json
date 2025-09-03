@@ -15,7 +15,8 @@
         "ms-mssql.mssql",
         "dvirtz.parquet-viewer",
         "GitHub.copilot",
-        "GitHub.copilot-chat"
+        "GitHub.copilot-chat",
+        "glenn2223.live-sass"
     ],
     "postCreateCommand": "/bin/bash /docker_init/init.sh",
     "features": {

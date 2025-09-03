@@ -1,14 +1,14 @@
-IF EXISTS (SELECT TOP 1 1 FROM [sys].[databases] WHERE [name]='fabcon_source')
+IF EXISTS (SELECT TOP 1 1 FROM [sys].[databases] WHERE [name]='fabcon_source_rowversion')
 BEGIN
-    EXEC('DROP DATABASE [fabcon_source]')
+    EXEC('DROP DATABASE [fabcon_source_rowversion]')
 END
 GO
 WAITFOR DELAY '00:00:10'
 GO
-EXEC('CREATE DATABASE [fabcon_source]')
-PRINT '[fabcon_source] database created'
+EXEC('CREATE DATABASE [fabcon_source_rowversion]')
+PRINT '[fabcon_source_rowversion] database created'
 GO
-USE [fabcon_source]
+USE [fabcon_source_rowversion]
 GO
 SET NOCOUNT ON
 GO
@@ -24,7 +24,8 @@ EXEC ('CREATE TABLE [dbo].[CardType]
     [TypeName]          NVARCHAR(50)    NOT NULL    UNIQUE,
     [Description]       NVARCHAR(255)       NULL,
     [CreatedOn]         DATETIME2       NOT NULL    DEFAULT SYSUTCDATETIME(),
-    [ModifiedOn]        DATETIME2           NULL
+    [ModifiedOn]        DATETIME2           NULL,
+    [Version]           ROWVERSION          NULL
 )')
 GO
 IF (SELECT COUNT(1) FROM [dbo].[CardType]) = 0
@@ -34,7 +35,7 @@ VALUES
     (2, 'MasterCard',       'MasterCard Credit or Debit Card',  '2025-06-01T08:00:00'),
     (3, 'American Express', 'American Express Credit Card',     '2025-06-01T08:00:00'),
     (4, 'Discover',         'Discover Credit Card',             '2025-06-01T08:00:00'),
-    (5, 'Debit',            'Generic Debit Card',               '2025-06-01T08:00:00')
+    (5, 'Debit',            'Generic',                          '2025-06-01T08:00:00')
 GO
 CREATE OR ALTER TRIGGER [dbo].[trg_CardType_Update]
 ON [dbo].[CardType]
@@ -68,7 +69,8 @@ EXEC ('CREATE TABLE [dbo].[TransactionStatus]
     [StatusName]            NVARCHAR(50)    NOT NULL    UNIQUE,
     [Description]           NVARCHAR(255)       NULL,
     [CreatedOn]             DATETIME2       NOT NULL    DEFAULT SYSUTCDATETIME(),
-    [ModifiedOn]            DATETIME2           NULL
+    [ModifiedOn]            DATETIME2           NULL,
+    [Version]               ROWVERSION          NULL
 )')
 GO
 IF (SELECT COUNT(1) FROM [dbo].[TransactionStatus]) = 0
@@ -111,7 +113,8 @@ EXEC ('CREATE TABLE [dbo].[TransactionType]
     [TypeName]              NVARCHAR(50)    NOT NULL    UNIQUE,
     [Description]           NVARCHAR(255)       NULL,
     [CreatedOn]             DATETIME2       NOT NULL    DEFAULT SYSUTCDATETIME(),
-    [ModifiedOn]            DATETIME2           NULL
+    [ModifiedOn]            DATETIME2           NULL,
+    [Version]               ROWVERSION          NULL
 )')
 GO
 IF (SELECT COUNT(1) FROM [dbo].[TransactionType]) = 0
@@ -154,7 +157,8 @@ EXEC ('CREATE TABLE [dbo].[Currency]
     [CurrencyName]          NVARCHAR(50)    NOT NULL,
     [Symbol]                NVARCHAR(5)         NULL,
     [CreatedOn]             DATETIME2       NOT NULL    DEFAULT SYSUTCDATETIME(),
-    [ModifiedOn]            DATETIME2           NULL
+    [ModifiedOn]            DATETIME2           NULL,
+    [Version]               ROWVERSION          NULL
 )')
 GO
 IF (SELECT COUNT(1) FROM [dbo].[Currency]) = 0
@@ -196,7 +200,8 @@ EXEC ('CREATE TABLE [dbo].[MerchantCategory]
     [CategoryName]          NVARCHAR(100)   NOT NULL    UNIQUE,
     [Description]           NVARCHAR(255)       NULL,
     [CreatedOn]             DATETIME2       NOT NULL    DEFAULT SYSUTCDATETIME(),
-    [ModifiedOn]            DATETIME2           NULL
+    [ModifiedOn]            DATETIME2           NULL,
+    [Version]               ROWVERSION          NULL
 )')
 GO
 IF (SELECT COUNT(1) FROM [dbo].[MerchantCategory]) = 0
@@ -246,6 +251,7 @@ EXEC ('CREATE TABLE [dbo].[Merchant]
     [Country]               NVARCHAR(100)       NULL,
     [CreatedOn]             DATETIME2       NOT NULL    DEFAULT SYSUTCDATETIME(),
     [ModifiedOn]            DATETIME2           NULL,
+    [Version]               ROWVERSION          NULL,
     CONSTRAINT [FK_Merchant_Category] FOREIGN KEY ([MerchantCategoryID]) REFERENCES [dbo].[MerchantCategory]([MerchantCategoryID])
 )')
 GO
@@ -318,7 +324,8 @@ EXEC ('CREATE TABLE [dbo].[Customer]
     [PhoneNumber]   NVARCHAR(20)        NULL,
     [DateOfBirth]   DATE                NULL,
     [CreatedOn]     DATETIME2       NOT NULL    DEFAULT SYSUTCDATETIME(),
-    [ModifiedOn]    DATETIME2           NULL
+    [ModifiedOn]    DATETIME2           NULL,
+    [Version]       ROWVERSION          NULL
 )')
 GO
 IF (SELECT COUNT(1) FROM [dbo].[Customer]) = 0
@@ -367,6 +374,7 @@ EXEC ('CREATE TABLE [dbo].[CardAccount]
     [CurrencyID]        INT             NOT NULL,
     [CreatedOn]         DATETIME2       NOT NULL    DEFAULT SYSUTCDATETIME(),
     [ModifiedOn]        DATETIME2           NULL,
+    [Version]           ROWVERSION          NULL,
     CONSTRAINT [FK_CardAccount_Customer] FOREIGN KEY ([CustomerID]) REFERENCES [dbo].[Customer]([CustomerID]),
     CONSTRAINT [FK_CardAccount_Currency] FOREIGN KEY ([CurrencyID]) REFERENCES [dbo].[Currency]([CurrencyID])
 )')
@@ -419,7 +427,7 @@ EXEC ('CREATE TABLE [dbo].[Card]
     [IsActive]          BIT             NOT NULL    DEFAULT 1,
     [CreatedOn]         DATETIME2       NOT NULL    DEFAULT SYSUTCDATETIME(),
     [ModifiedOn]        DATETIME2           NULL,
-
+    [Version]           ROWVERSION          NULL,
     CONSTRAINT [FK_Card_CardAccount] FOREIGN KEY ([CardAccountID]) REFERENCES [dbo].[CardAccount]([CardAccountID]),
     CONSTRAINT [FK_Card_CardType]    FOREIGN KEY ([CardTypeID])    REFERENCES [dbo].[CardType]   ([CardTypeID])
 )')
@@ -460,8 +468,9 @@ GO
 -- ==============================================================================
 -- Create Payments table
 -- ==============================================================================
-IF NOT EXISTS (SELECT TOP 1 1 FROM [INFORMATION_SCHEMA].[TABLES] WHERE [TABLE_SCHEMA]='dbo' AND [TABLE_NAME]='Payments')
-EXEC ('CREATE TABLE [dbo].[Payments]
+DROP TABLE IF EXISTS [dbo].[Payments]
+GO
+CREATE TABLE [dbo].[Payments]
 (
     [PaymentID]         UNIQUEIDENTIFIER                PRIMARY KEY DEFAULT NEWID(),
     [CardAccountID]     INT                 NOT NULL,
@@ -469,10 +478,10 @@ EXEC ('CREATE TABLE [dbo].[Payments]
     [CurrencyID]        INT                 NOT NULL,
     [PaymentDate]       DATE                NOT NULL,
     [CreatedOn]         DATETIME2           NOT NULL,
-
+    [Version]           ROWVERSION              NULL,
     CONSTRAINT [FK_Payments_CardAccount] FOREIGN KEY ([CardAccountID]) REFERENCES [dbo].[CardAccount]([CardAccountID]),
     CONSTRAINT [FK_Payments_Currency]    FOREIGN KEY ([CurrencyID])    REFERENCES [dbo].[Currency]([CurrencyID])
-)')
+)
 GO
 PRINT '[dbo].[Payments] done'
 GO
@@ -489,8 +498,9 @@ GO
 -- ==============================================================================
 -- Create Transaction table
 -- ==============================================================================
-IF NOT EXISTS (SELECT TOP 1 1 FROM [INFORMATION_SCHEMA].[TABLES] WHERE [TABLE_SCHEMA]='dbo' AND [TABLE_NAME]='Transactions')
-EXEC ('CREATE TABLE [dbo].[Transactions]
+DROP TABLE IF EXISTS [dbo].[Transactions]
+GO
+CREATE TABLE [dbo].[Transactions]
 (
     [TransactionID]             UNIQUEIDENTIFIER    NOT NULL   PRIMARY KEY DEFAULT NEWID(),
     [CardID]                    INT                 NOT NULL,
@@ -501,13 +511,13 @@ EXEC ('CREATE TABLE [dbo].[Transactions]
     [Amount]                    DECIMAL(18,2)       NOT NULL,
     [TransactionDate]           DATE                NOT NULL,
     [CreatedOn]                 DATETIME2           NOT NULL,
-
+    [Version]                   ROWVERSION              NULL,
     CONSTRAINT [FK_Transaction_Card] FOREIGN KEY ([CardID]) REFERENCES [dbo].[Card]([CardID]),
     CONSTRAINT [FK_Transaction_TransactionType] FOREIGN KEY ([TransactionTypeID]) REFERENCES [dbo].[TransactionType]([TransactionTypeID]),
     CONSTRAINT [FK_Transaction_TransactionStatus] FOREIGN KEY ([TransactionStatusID]) REFERENCES [dbo].[TransactionStatus]([TransactionStatusID]),
     CONSTRAINT [FK_Transaction_Merchant] FOREIGN KEY ([MerchantID]) REFERENCES [dbo].[Merchant]([MerchantID]),
     CONSTRAINT [FK_Transaction_Currency] FOREIGN KEY ([CurrencyID]) REFERENCES [dbo].[Currency]([CurrencyID])
-)')
+)
 GO
 IF (SELECT COUNT(1) FROM [dbo].[Transactions]) = 0
 INSERT INTO [dbo].[Transactions] ([CardID], [TransactionTypeID], [TransactionStatusID], [MerchantID], [CurrencyID], [Amount], [TransactionDate], [CreatedOn])
@@ -642,6 +652,8 @@ BEGIN
             SUM(t.[Amount]) > 0
     END
 
+    
+
 END
 GO
 PRINT '[dbo].[usp_insert_new_transaction] done'
@@ -670,11 +682,10 @@ BEGIN
 
     WHILE @continue = 1
     BEGIN
-
+        
         EXEC [dbo].[usp_insert_new_transaction]
 
         SET @newtransaction = (SELECT MAX([CreatedOn]) FROM [dbo].[Transactions])
-
         IF DATEDIFF(HOUR, @initaltime, @newtransaction) >= @days * 24
             SET @continue = 0
     END
@@ -688,27 +699,6 @@ GO
 
 
 
-
-GO
-CREATE OR ALTER PROCEDURE [dbo].[usp_insert_continuously_transactions]
-AS
-BEGIN
-
-    SET NOCOUNT ON
-    DECLARE @newtransaction DATETIME2
-
-    WHILE 1=1
-    BEGIN
-
-        EXEC [dbo].[usp_insert_new_transaction]
-        SET @newtransaction = (SELECT MAX([CreatedOn]) FROM [dbo].[Transactions])
-        PRINT 'Record inserted on ' + FORMAT(@newtransaction, 'yyyy-MM-dd HH:mm:ss.fffff')
-        WAITFOR DELAY '00:00:02'
-    END
-END
-GO
-PRINT '[dbo].[usp_insert_continuously_transactions] done'
-GO
 
 
 

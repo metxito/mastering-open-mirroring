@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-echo -e "\033[32mWaiting 30 seconds\033[0m"
-sleep 30
+echo -e "\033[32mWaiting 5 seconds\033[0m"
+sleep 5
 
 echo -e "\033[32mPost script has started\033[0m"
 echo -e "\033[34m-------------------------------------\033[0m"
@@ -132,13 +132,24 @@ pip install -r /docker_init/requirements.txt
 ## RUN SQL scripts
 echo ""
 echo ""
-echo -e "\033[32mDatabase [fabcon_source] initializing\033[0m"
+echo -e "\033[32mDatabase [fabcon_source_basic] initializing\033[0m"
 echo -e "\033[34m-------------------------------------\033[0m"
 /opt/mssql-tools18/bin/sqlcmd \
     -S fabcon-sqlserver \
     -U sa \
     -P 'FABcon2025!' \
-    -i /docker_init/1000_fabcon_source_init_database.sql \
+    -i /docker_init/1000_fabcon_source_basic_init_database.sql \
+    -C || echo "Init script failed"
+
+    echo ""
+echo ""
+echo -e "\033[32mDatabase [fabcon_source_rowversion] initializing\033[0m"
+echo -e "\033[34m-------------------------------------\033[0m"
+/opt/mssql-tools18/bin/sqlcmd \
+    -S fabcon-sqlserver \
+    -U sa \
+    -P 'FABcon2025!' \
+    -i /docker_init/1000_fabcon_source_basic_init_database.sql \
     -C || echo "Init script failed"
 
 
