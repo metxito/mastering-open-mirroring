@@ -195,7 +195,7 @@ cython_debug/
 
 
 
-documentation/under_edition
+documentation/under_edition/
 code/02_automatic_simple_mirroring/00_config.json
 
 myinfo.md
