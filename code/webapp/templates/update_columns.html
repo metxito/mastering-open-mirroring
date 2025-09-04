@@ -19,7 +19,6 @@
                     <th>Column Name</th>
                     <th>Type</th>
                     <th>Unique Key</th>
-                    <th>Timestamp Key</th>
                 </tr>
             </thead>
             <tbody>
@@ -31,15 +30,12 @@
                     <td>
                         <input type="checkbox" name="unique_key" value="{{ col.id }}" {% if col.unique_key %}checked{% endif %}>
                     </td>
-                    <td>
-                        <input type="checkbox" name="timestamp_key" value="{{ col.id }}" {% if col.timestamp_key %}checked{% endif %}>
-                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
         <button type="submit" class="btn btn-primary">Save</button>
-        <a href="/integration" class="btn btn-secondary">Close</a>
+        <a href="/integration" class="btn btn-secondary">Cancel</a>
     </form>
 
 </body>

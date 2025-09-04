@@ -4,8 +4,8 @@
             <th>ID</th>
             <th>Connection</th>
             <th>Object</th>
+            <th>CDC</th>
             <th>Unique Keys</th>
-            <th>Timestamp Keys</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -15,11 +15,11 @@
             <td>{{ row.id }}</td>
             <td>{{ row.connection_name }}</td>
             <td>{{ row.object }}</td>
+            <td>{{ 'CDC Enabled' if row.cdc_enabled else '' }}</td>
             <td>{{ row.unique_keys }}</td>
-            <td>{{ row.timestamp_keys }}</td>
             <td>
                 <form method="post" action="/include_source/{{ row.id }}" style="display:inline;">
-                    <button type="submit" class="btn btn-success btn-sm">Include</button>
+                    <button type="submit" class="btn btn-success btn-sm">Import into queries</button>
                 </form>
                 <form method="get" action="/update_columns/{{ row.id }}" style="display:inline;">
                     <button type="submit" class="btn btn-primary btn-sm">Update Columns</button>
