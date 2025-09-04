@@ -353,6 +353,9 @@ EXEC ('CREATE TABLE [dbo].[CardAccount]
     CONSTRAINT [FK_CardAccount_Currency] FOREIGN KEY ([CurrencyID]) REFERENCES [dbo].[Currency]([CurrencyID])
 )')
 GO
+/*
+
+
 IF NOT EXISTS (SELECT TOP 1 1 FROM [sys].[tables] WHERE [name] = 'CardAccount' AND [is_tracked_by_cdc] = 1)
 BEGIN
     EXEC [sys].[sp_cdc_enable_table]
@@ -362,6 +365,8 @@ BEGIN
         @supports_net_changes = 1 
     PRINT 'CDC enabled on [dbo].[CardAccount]'        
 END
+
+*/
 GO
 IF (SELECT COUNT(1) FROM [dbo].[CardAccount]) = 0
 INSERT INTO [dbo].[CardAccount] ([CardAccountID], [CustomerID], [AccountNumber], [Balance], [CreditLimit], [CurrencyID])
@@ -401,6 +406,9 @@ EXEC ('CREATE TABLE [dbo].[Card]
     CONSTRAINT [FK_Card_CardType]    FOREIGN KEY ([CardTypeID])    REFERENCES [dbo].[CardType]   ([CardTypeID])
 )')
 GO
+/*
+
+
 IF NOT EXISTS (SELECT TOP 1 1 FROM [sys].[tables] WHERE [name] = 'Card' AND [is_tracked_by_cdc] = 1)
 BEGIN
     EXEC [sys].[sp_cdc_enable_table]
@@ -410,6 +418,9 @@ BEGIN
         @supports_net_changes = 1 
     PRINT 'CDC enabled on [dbo].[Card]'        
 END
+
+
+*/
 GO
 IF (SELECT COUNT(1) FROM [dbo].[Card]) = 0
 INSERT INTO [dbo].[Card] ([CardID], [CardAccountID], [CardTypeID], [CardNumber], [ActivationDate], [ExpirationDate], [CVV])

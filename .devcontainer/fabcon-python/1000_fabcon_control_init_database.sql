@@ -152,7 +152,7 @@ BEGIN
     DECLARE @alter_name INT = 0
     DECLARE @name varchar(255) = @base_name
 
-    WHILE EXISTS (SELECT TOP 1 1 FROM [control].[queries_control] WHERE [query_name] = @name)
+    WHILE EXISTS (SELECT TOP 1 1 FROM [control].[queries_control] WHERE [name] = @name)
     BEGIN
         SET @alter_name = @alter_name + 1
         SET @name = @base_name + ' ' + FORMAT(@alter_name, '00')
@@ -161,20 +161,20 @@ BEGIN
     INSERT INTO [control].[queries_control] (
         [proyect_name],
         [connection_name],
-        [query_name],
-        [base_query],
-        [unique_keys],
-        [timestamp_keys],        
-        [change_detection_mode]
+        [name],
+        [query_new_lsn],
+        [query_full],
+        [query_incremental],
+        [unique_keys]
     )
     SELECT  
         [proyect_name] = 'AutomaticMirroring',
         [connection_name] = src.[connection_name],
-        [query_name] = @name,
-        [base_query] = 'SELECT * FROM ' + src.[object],
-        [unique_keys] = src.[unique_keys],
-        [timestamp_keys] = src.[timestamp_keys],
-        [change_detection_mode] = 'only_insert'
+        [name] = @name,
+        [query_new_lsn] = 'SELECT [lsn]=[sys].[fn_cdc_get_max_lsn]()',
+        [query_full] = 'SELECT * FROM ' + src.[object],
+        [query_incremental] = 'SELECT * FROM [cdc].[fn_cdc_get_all_changes_' + REPLACE(REPLACE(REPLACE(src.[object], '[', ''), ']', ''), '.', '_') + ']([sys].[fn_cdc_get_min_lsn](''' + REPLACE(REPLACE(REPLACE(src.[object], '[', ''), ']', ''), '.', '_') + '''), [sys].[fn_cdc_get_max_lsn](), ''all'')',
+        [unique_keys] = src.[unique_keys]
     FROM [source].[v_sources] AS src
     WHERE src.[id] = @id
 
