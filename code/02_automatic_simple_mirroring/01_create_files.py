@@ -36,8 +36,8 @@ with sql_source_engine.connect() as conn:
 
 
 
-        
-        
+
+
         # GET the columns from the table
         columns_query = f"SELECT [COLUMN_NAME] FROM [INFORMATION_SCHEMA].[COLUMNS] WHERE [TABLE_NAME] = '{t}'"
         columns_df = pd.read_sql(columns_query, conn)

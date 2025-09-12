@@ -3,7 +3,7 @@ import time
 from sqlalchemy import create_engine, text
 
 
-config = json.load(open("../00_config/config.json"))
+config = json.load(open("00_config.json"))
 start_time = time.time()
 
 while time.time() - start_time < 3600:
