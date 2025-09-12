@@ -1,28 +1,38 @@
+import threading
+import time
+import sqlalchemy as sa
 
-from fastapi import APIRouter, Request, Form
+from fastapi import APIRouter, Request, Form, BackgroundTasks
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
+from starlette.responses import JSONResponse
+from config import Config
 from services.data_service import (
-    get_queries, get_proyect_names, get_connection_names, get_sources, get_source_columns
+    get_queries, get_proyect_names, get_connection_names, get_sources, get_source_columns, run_simulation_procedure
 )
+
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
+
 @router.get("/")
 def root():
     return RedirectResponse(url="/current_status")
+
 
 @router.get("/current_status")
 def current_status(request: Request):
     queries = get_queries()
     proyect_names = get_proyect_names()
     connection_names = get_connection_names()
+    sim_running = simulation_state["running"]
     return templates.TemplateResponse("current_status.html", {
         "request": request,
         "queries": queries,
         "proyect_names": proyect_names,
-        "connection_names": connection_names
+        "connection_names": connection_names,
+        "sim_running": sim_running
     })
 
 @router.post("/create_query")
@@ -165,6 +175,76 @@ def check_connection(request: Request):
     except Exception as e:
         return templates.TemplateResponse("check_connection.html", {"request": request, "status": "error", "error": str(e)})
 
+
+
+
+
+
+# Simulation state and thread
+simulation_state = {"running": False, "thread": None, "logs": []}
+def simulation_loop():
+    while simulation_state["running"]:
+        try:
+            current_timestamp = run_simulation_procedure()
+            simulation_state["logs"].append(current_timestamp)
+        except Exception as e:
+            print(f"Simulation error: {e}")
+        for _ in range(2):
+            if not simulation_state["running"]:
+                break
+            time.sleep(1)
+
+
+@router.get("/simulation_status")
+def simulation_status():
+    # Collect unsent logs
+    unsent_logs = simulation_state["logs"]
+    simulation_state["logs"] = []
+
+    # Mark them as sent
+    if unsent_logs and len(unsent_logs) > 0:
+        unsent_logs_text = [x.strftime("%Y-%m-%d %H:%M:%S") for x in unsent_logs]
+        return JSONResponse({
+            "running": simulation_state["running"],
+            "new_logs": unsent_logs_text
+        })
+    else:
+        return JSONResponse({
+            "running": simulation_state["running"]
+        })
+
+
+@router.post("/start_simulation")
+def start_simulation():
+    if not simulation_state["running"]:
+        simulation_state["running"] = True
+        t = threading.Thread(target=simulation_loop, daemon=True)
+        simulation_state["thread"] = t
+        t.start()
+    return JSONResponse({"status": "started"})
+
+
+@router.post("/stop_simulation")
+def stop_simulation():
+    simulation_state["running"] = False
+    return JSONResponse({"status": "stopped"})
+
+
+
+
+
+
+
+
+
+
+
+
 # Register router with FastAPI app
 def register_routes(app):
     app.include_router(router)
+
+
+
+
+

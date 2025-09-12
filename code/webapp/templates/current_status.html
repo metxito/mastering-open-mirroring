@@ -84,6 +84,68 @@
       </form>
     </div>
   </div>
+  <!-- End of grid and modal -->
 </div>
+
+<!-- Simulation control button at page bottom -->
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-4 d-flex align-items-center">
+      <div id="divcontrol">
+        <h2>Transactional Simulation</h2>
+        <button id="simulation-btn" class="btn btn-info"></button>
+        <span id="simulation-status" class="ms-2"></span>
+        <div id="divlogs" class="mt-2"></div>
+      </div>
+    </div>
+    <div class="col-6">
+      asdlas
+    </div>
+  </div>
+</div>
+<script>
+function updateSimulationButton(running) {
+  const btn = document.getElementById('simulation-btn');
+  btn.textContent = running ? 'Stop simulation' : 'Start simulation';
+  btn.className = running ? 'btn btn-danger' : 'btn btn-info';
+  btn.onclick = function() {
+    fetch(running ? '/stop_simulation' : '/start_simulation', {method: 'POST'})
+      .then(() => setTimeout(checkSimulationStatus, 300));
+  };
+  document.getElementById('simulation-status').textContent = running ? 'Simulation running...' : 'Simulation stopped.';
+}
+
+function addtimestamptlog(new_logs){
+      // Handle new_logs
+      console.log("entro")
+      const logsDiv = document.getElementById('divlogs');
+      if (new_logs && Array.isArray(new_logs)) {
+        new_logs.forEach(l => {
+          const line = document.createElement('div');
+          line.textContent = "Current timestamp : " + l;
+          logsDiv.appendChild(line);
+        });
+      }
+}
+
+function checkSimulationStatus() {
+  fetch('/simulation_status')
+    .then(r => r.json())
+    .then(data => {
+      updateSimulationButton(data.running);
+      if ('new_logs' in data) {
+        if (data.new_logs.length > 0){
+          addtimestamptlog(data.new_logs);
+        }
+      }
+    });
+}
+
+// Initial button state
+document.addEventListener('DOMContentLoaded', function() {
+  checkSimulationStatus();
+  setInterval(checkSimulationStatus, 3000);
+});
+</script>
 </body>
 </html>

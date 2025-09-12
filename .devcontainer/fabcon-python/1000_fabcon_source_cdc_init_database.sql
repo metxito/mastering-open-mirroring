@@ -705,6 +705,8 @@ BEGIN
             SET @continue = 0
     END
 
+    SELECT [MaxCreatedOn] = MAX([CreatedOn]) FROM [dbo].[Transactions]
+
 END
 GO
 PRINT '[dbo].[usp_insert_range_transaction] done'

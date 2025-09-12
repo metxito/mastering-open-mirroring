@@ -1,12 +1,10 @@
-
 import sqlalchemy as sa
 from sqlalchemy import text
+from config import Config
 
 # Database connection config
-DATABASE_CONTROL_URL = "mssql+pyodbc://sa:FABcon2025!@fabcon-sqlserver,1433/fabcon_control?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
-engine_control = sa.create_engine(DATABASE_CONTROL_URL)
-DATABASE_SOURCE_URL = "mssql+pyodbc://sa:FABcon2025!@fabcon-sqlserver,1433/fabcon_source_rowversion?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
-engine_source = sa.create_engine(DATABASE_SOURCE_URL)
+engine_control = sa.create_engine(Config.DATABASE_CONTROL_URL)
+engine_source = sa.create_engine(Config.DATABASE_SOURCE_URL)
 
 def get_queries():
     with engine_control.begin() as conn:
@@ -32,3 +30,11 @@ def get_source_columns(id):
     with engine_control.begin() as conn:
         result = conn.execute(text("SELECT c.* FROM [source].[sources] AS src JOIN [source].[columns] AS c ON src.[connection_name]=c.[connection_name] AND src.[object]=c.[object] WHERE src.[id] = :id"), {"id": id})
         return [dict(row._mapping) for row in result]
+
+def run_simulation_procedure():
+    with engine_source.begin() as conn:
+        result = conn.execute(text("EXEC [dbo].[usp_insert_range_transaction] @days=2"))
+        row = result.fetchone()
+        if row and ("MaxCreatedOn" in row._mapping):
+            return row._mapping["MaxCreatedOn"]
+        return None
